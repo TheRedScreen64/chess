@@ -1,6 +1,6 @@
 #include "ChessGame.h"
 
-using namespace std;
+//using namespace std;
 
 int main()
 {
@@ -17,17 +17,49 @@ int main()
 
     Color color = selectColor();
 
-    string test;
+    string message = "";
     bool running = true;
     while (running) {
-        displayBoard(board, 8, 8);
+        displayBoard(board, 8, 8, color, message);
+        message = "";
+        Move move = promptForMove(8);
+        bool valid = doMove(board, color, 8, move);
+
+        if (!valid) {
+            message = "Move is not valid!";
+            continue;
+        }
+
+        color = color == Color::Black ? Color::White : Color::Black;
         // for now
-        running = false;
+        //running = false;
     }
 }
 
-void displayBoard(char board[][8], int sizeX, int sizeY) {
+bool ownsPiece(char board[][8], Vector2D pos, Color color) {
+    if (islower(board[pos.y][pos.x]) && color == Color::Black) {
+        return true;
+    }
+    else if (isupper(board[pos.y][pos.x]) && color == Color::White) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, string message) {
     system("cls");
+
+    string colorAsString = currentColor == Color::Black ? "Black" : "White";
+
+    cout << "It's " << colorAsString << "'s turn\n";
+    cout << endl;
+    if (message.length() > 0) {
+        cout << message << endl;
+        cout << endl;
+    }
+
     cout << "\33[93m";
     for (int y = 0; y < sizeY; y++) {
         for (int x = 0; x < sizeX; x++) {
@@ -60,7 +92,7 @@ Color selectColor() {
     bool colorSelected = false;
     while (!colorSelected) {
         color = promptForColor();
-        if (color != White && color != Black) {
+        if (color != Color::White && color != Color::Black) {
             system("cls");
             continue;
         }
@@ -77,4 +109,72 @@ Color promptForColor() {
     cin >> tempNumber;
     color = (Color)tempNumber;
     return color;
+}
+
+Move promptForMove(int maxCoord) {
+    Vector2D fromPos;
+    Vector2D toPos;
+    bool moveValid = false;
+    while (!moveValid) {
+        string input;
+        cout << "What is your next move? fromX,fromY,toX,toY";
+        cin >> input;
+
+        fromPos.x = stoi(input.substr(0, input.find(",", 0)));
+        input = input.substr(input.find(",", 0) + 1, input.length());
+
+        fromPos.y = stoi(input.substr(0, input.find(",", 0)));
+        input = input.substr(input.find(",", 0) + 1, input.length());
+
+        toPos.x = stoi(input.substr(0, input.find(",", 0)));
+        input = input.substr(input.find(",", 0) + 1, input.length());
+
+        toPos.y = stoi(input.substr(0, input.find(",", 0)));
+        input = input.substr(input.find(",", 0) + 1, input.length());
+
+        cout << fromPos.x << fromPos.y << toPos.x << toPos.y;
+
+        if (fromPos.x < 1 || fromPos.x > maxCoord || fromPos.y < 1 || fromPos.y > maxCoord) {
+            system("cls");
+            cout << "from value can't must be in the range (1," << maxCoord << ")\n";
+            continue;
+        }
+        if (toPos.x < 1 || toPos.x > maxCoord || toPos.y < 1 || toPos.y > maxCoord) {
+            system("cls");
+            cout << "to value can't must be in the range (1," << maxCoord << ")\n";
+            continue;
+        }
+
+        // TODO: Add checks
+
+        moveValid = true;
+    }
+    return { fromPos, toPos };
+}
+
+bool doMove(char board[][8], Color color, int sizeX, Move move) {
+    if (!isMoveValid(board, color, move)) {
+        return false;
+    }
+
+    char piece = board[move.from.y - 1][move.from.x - 1];
+    board[move.from.y - 1][move.from.x - 1] = ' ';
+    board[move.to.y - 1][move.to.x - 1] = piece;
+
+    return true;
+}
+
+bool isMoveValid(char board[][8], Color color, Move move) {
+    if (board[move.from.y - 1][move.from.x - 1] == ' ') {
+        return false;
+    }
+    if (!ownsPiece(board, move.from, color)) {
+        return false;
+    }
+    if (board[move.to.y - 1][move.to.x - 1] != ' ') {
+        // TODO: Add hit detection
+        //return false;
+    }
+
+    return true;
 }
