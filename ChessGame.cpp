@@ -16,6 +16,43 @@ int main()
     };
 
     Color color = selectColor();
+
+    string test;
+    bool running = true;
+    while (running) {
+        displayBoard(board, 8, 8);
+        // for now
+        running = false;
+    }
+}
+
+void displayBoard(char board[][8], int sizeX, int sizeY) {
+    system("cls");
+    cout << "\33[93m";
+    for (int y = 0; y < sizeY; y++) {
+        for (int x = 0; x < sizeX; x++) {
+            if (y % 2 == 0) {
+                if (x % 2 == 0) {
+                    cout << "\33[47m";
+                }
+                else {
+                    cout << "\33[40m";
+                }
+            }
+            else {
+                if (x % 2 == 0) {
+                    cout << "\33[40m";
+                }
+                else {
+                    cout << "\33[47m";
+                }
+            }
+            
+            cout << " " << board[y][x] << " ";
+        }
+        cout << endl;
+    }
+    cout << "\33[0m";
 }
 
 Color selectColor() {

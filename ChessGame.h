@@ -8,6 +8,6 @@ enum Color {
     White
 };
 
-void displayBoard();
-
+void displayBoard(char[][8], int, int);
+Color selectColor();
 Color promptForColor();
