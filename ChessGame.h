@@ -24,5 +24,5 @@ bool ownsPiece(char board[][8], Vector2D pos, Color color);
 Color selectColor();
 Color promptForColor();
 Move promptForMove(int);
-bool doMove(char board[][8], Color color, int sizeX, Move move);
-bool isMoveValid(char board[][8], Color color, Move move);
+string doMove(char board[][8], Color color, int sizeX, Move move);
+string isMoveValid(char board[][8], Color color, Move move);

@@ -1,7 +1,5 @@
 #include "ChessGame.h"
 
-//using namespace std;
-
 int main()
 {
     static char board[8][8] = {
@@ -23,16 +21,13 @@ int main()
         displayBoard(board, 8, 8, color, message);
         message = "";
         Move move = promptForMove(8);
-        bool valid = doMove(board, color, 8, move);
+        message = doMove(board, color, 8, move);
 
-        if (!valid) {
-            message = "Move is not valid!";
+        if (message != "") {
             continue;
         }
 
         color = color == Color::Black ? Color::White : Color::Black;
-        // for now
-        //running = false;
     }
 }
 
@@ -52,9 +47,9 @@ void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, str
     system("cls");
 
     string colorAsString = currentColor == Color::Black ? "Black" : "White";
-
-    cout << "It's " << colorAsString << "'s turn\n";
+    cout << "It is " << colorAsString << "'s turn\n";
     cout << endl;
+
     if (message.length() > 0) {
         cout << message << endl;
         cout << endl;
@@ -152,29 +147,30 @@ Move promptForMove(int maxCoord) {
     return { fromPos, toPos };
 }
 
-bool doMove(char board[][8], Color color, int sizeX, Move move) {
-    if (!isMoveValid(board, color, move)) {
-        return false;
+string doMove(char board[][8], Color color, int sizeX, Move move) {
+    string message = isMoveValid(board, color, move);
+    if (message != "") {
+        return message;
     }
 
     char piece = board[move.from.y - 1][move.from.x - 1];
     board[move.from.y - 1][move.from.x - 1] = ' ';
     board[move.to.y - 1][move.to.x - 1] = piece;
 
-    return true;
+    return "";
 }
 
-bool isMoveValid(char board[][8], Color color, Move move) {
+string isMoveValid(char board[][8], Color color, Move move) {
     if (board[move.from.y - 1][move.from.x - 1] == ' ') {
-        return false;
+        return "There's no piece at that location.";
     }
     if (!ownsPiece(board, move.from, color)) {
-        return false;
+        return "You don't own that piece.";
     }
     if (board[move.to.y - 1][move.to.x - 1] != ' ') {
         // TODO: Add hit detection
         //return false;
     }
 
-    return true;
+    return "";
 }
