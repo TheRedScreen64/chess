@@ -27,15 +27,15 @@ int main()
             continue;
         }
 
-        color = color == Color::Black ? Color::White : Color::Black;
+        //color = color == Color::Black ? Color::White : Color::Black;
     }
 }
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color) {
-    if (islower(board[pos.y][pos.x]) && color == Color::Black) {
+    if (islower(board[pos.y - 1][pos.x - 1]) && color == Color::Black) {
         return true;
     }
-    else if (isupper(board[pos.y][pos.x]) && color == Color::White) {
+    else if (isupper(board[pos.y - 1][pos.x - 1]) && color == Color::White) {
         return true;
     }
     else {
@@ -172,5 +172,37 @@ string isMoveValid(char board[][8], Color color, Move move) {
         //return false;
     }
 
+    //todo: check if tolower makes sense depending whether figures are allowed to walk backwards or not
+    switch (tolower(board[move.from.y - 1][move.from.x - 1])) {
+    case 'p':
+
+        break;
+    case 'r':
+        break;
+    case 'n':
+        break;
+    case 'b':
+        break;
+    case 'q':
+        if (!isDiagonal(move)) {
+            return "not diagonal";
+        }
+        break;
+    case 'k':
+        if (abs(move.to.x - move.from.x) > 1 || abs(move.to.y - move.from.y) > 1) {
+            return "to far";
+        }
+        break;
+    default:
+        return "not a valid piece type.";
+    }
+
     return "";
+}
+
+bool isDiagonal(Move move) {
+    if (abs(move.to.x - move.from.x) == abs(move.to.y - move.from.y)){
+        return true;
+    }
+    return false;
 }
