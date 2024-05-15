@@ -14,25 +14,43 @@ int main()
     };
 
     static char beatenPiecesBlack[16];
+    int lastInsertBlack = -1;
     static char beatenPiecesWhite[16];
+    int lastInsertWhite = -1;
 
     Color color = selectColor();
 
     string message = "";
+    string winner = "";
     bool running = true;
     while (running) {
         displayBoard(board, 8, 8, color, message);
+        displayStats(beatenPiecesBlack, beatenPiecesWhite);
         message = "";
         Move move = promptForMove(8);
         message = doMove(board, color, 8, move);
 
-        //if (message.find("beat") != string::npos) {
-        //    string piece = message.substr(5, message.find(":", 0));
-        //    cout << piece;
-        //    if (color == Color::Black) {
-        //        // TODO: Append to array
-        //    }
-        //}
+        if (message.find("beat") != string::npos) {
+            string piece = message.substr(5, message.find(":", 0));
+            cout << piece;
+            if (color == Color::Black) {
+                beatenPiecesWhite[lastInsertWhite + 1] = piece[0];
+                lastInsertWhite++;
+            }
+            else {
+                beatenPiecesBlack[lastInsertBlack + 1] = piece[0];
+                lastInsertBlack++;
+            }
+            if (lastInsertBlack >= 15) {
+                winner = "White";
+                running = false;
+            }
+            else if (lastInsertWhite >= 15) {
+                winner = "Black";
+                running = false;
+            }
+            message = "";
+        }
 
         if (message != "") {
             continue;
@@ -40,6 +58,10 @@ int main()
 
         color = color == Color::Black ? Color::White : Color::Black;
     }
+
+    system("cls");
+
+    cout << winner << " has won!";
 }
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color) {
@@ -52,6 +74,11 @@ bool ownsPiece(char board[][8], Vector2D pos, Color color) {
     else {
         return false;
     }
+}
+
+void displayStats(char beatenPiecesBlack[16], char beatenPiecesWhite[16]) {
+    cout << "Beaten pieces: (Black) " << beatenPiecesBlack << ", (White) " << beatenPiecesWhite << endl;
+    cout << endl;
 }
 
 void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, string message) {
@@ -145,12 +172,12 @@ Move promptForMove(int maxCoord) {
 
         if (fromPos.x < 1 || fromPos.x > maxCoord || fromPos.y < 1 || fromPos.y > maxCoord) {
             system("cls");
-            cout << "from value can't must be in the range (1," << maxCoord << ")\n";
+            cout << "From value must be in the range (1," << maxCoord << ")\n";
             continue;
         }
         if (toPos.x < 1 || toPos.x > maxCoord || toPos.y < 1 || toPos.y > maxCoord) {
             system("cls");
-            cout << "to value can't must be in the range (1," << maxCoord << ")\n";
+            cout << "To value must be in the range (1," << maxCoord << ")\n";
             continue;
         }
 
@@ -181,52 +208,57 @@ string isMoveValid(char board[][8], Color color, Move move) {
     if (!ownsPiece(board, move.from, color)) {
         return "You don't own that piece.";
     }
-    if (board[move.to.y - 1][move.to.x - 1] != ' ') {
-        // TODO: Add hit detection
-       /* if (ownsPiece(board, move.to, color)) {
-            return "that's your own piece";
-        }
-        else {
-            string piece = string(1, board[move.to.y - 1][move.to.x - 1]);
-            return "beat:" + piece;
-        }*/
-    }
+    
 
     //todo: check if tolower makes sense depending whether figures are allowed to walk backwards or not
     // TODO: Improve error messages
     switch (tolower(board[move.from.y - 1][move.from.x - 1])) {
     case 'p':
         if (!isStraightDirectional(move, color)) {
-            return "not straight directional";
+            return "Move is not straight directional";
         }
         break;
     case 'r':
         if (!isStraight(move)) {
-            return "not straight";
+            return "Move is not straight";
         }
         break;
     case 'n':
         if (!isLShape(move)) {
-            return "not L shape";
+            return "Move is not L shape";
         }
         break;
     case 'b':
         if (!isDiagonal(move)) {
-            return "not diagonal";
+            return "Move is not diagonal";
         }
         break;
     case 'q':
         if (!(isDiagonal(move) || isStraight(move))) {
-            return "not diagonal or straight";
+            return "Move is not diagonal or straight";
         }
         break;
     case 'k':
         if (abs(move.to.x - move.from.x) > 1 || abs(move.to.y - move.from.y) > 1) {
-            return "to far";
+            return "Move is to far";
         }
         break;
     default:
-        return "not a valid piece type.";
+        return "Not a valid piece type.";
+    }
+
+    if (board[move.to.y - 1][move.to.x - 1] != ' ') {
+        // TODO: Add hit detection
+        if (ownsPiece(board, move.to, color)) {
+            return "That's your own piece";
+        }
+        else {
+            char movedPiece = board[move.from.y - 1][move.from.x - 1];
+            string piece = string(1, board[move.to.y - 1][move.to.x - 1]);
+            board[move.from.y - 1][move.from.x - 1] = ' ';
+            board[move.to.y - 1][move.to.x - 1] = movedPiece;
+            return "beat:" + piece;
+        }
     }
 
     return "";

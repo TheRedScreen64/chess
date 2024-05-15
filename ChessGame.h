@@ -19,6 +19,7 @@ enum class Color {
     White = 1
 };
 
+void displayStats(char beatenPiecesBlack[16], char beatenPiecesWhite[16]);
 void displayBoard(char[][8], int, int, Color, string);
 bool ownsPiece(char board[][8], Vector2D pos, Color color);
 Color selectColor();
