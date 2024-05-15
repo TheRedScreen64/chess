@@ -26,4 +26,8 @@ Color promptForColor();
 Move promptForMove(int);
 string doMove(char board[][8], Color color, int sizeX, Move move);
 string isMoveValid(char board[][8], Color color, Move move);
+
+bool isStraight(Move move);
 bool isDiagonal(Move move);
+bool isLShape(Move move);
+bool isStraightDirectional(Move move, Color color);

@@ -13,6 +13,9 @@ int main()
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
     };
 
+    static char beatenPiecesBlack[16];
+    static char beatenPiecesWhite[16];
+
     Color color = selectColor();
 
     string message = "";
@@ -23,11 +26,19 @@ int main()
         Move move = promptForMove(8);
         message = doMove(board, color, 8, move);
 
+        //if (message.find("beat") != string::npos) {
+        //    string piece = message.substr(5, message.find(":", 0));
+        //    cout << piece;
+        //    if (color == Color::Black) {
+        //        // TODO: Append to array
+        //    }
+        //}
+
         if (message != "") {
             continue;
         }
 
-        //color = color == Color::Black ? Color::White : Color::Black;
+        color = color == Color::Black ? Color::White : Color::Black;
     }
 }
 
@@ -55,23 +66,28 @@ void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, str
         cout << endl;
     }
 
-    cout << "\33[93m";
+    cout << "   ";
+    for (int x = 0; x < sizeX; x++) {
+        cout << " " << x + 1 << " ";
+    }
+    cout << endl;
     for (int y = 0; y < sizeY; y++) {
+        cout << "\33[0m " << y + 1 << " ";
         for (int x = 0; x < sizeX; x++) {
             if (y % 2 == 0) {
                 if (x % 2 == 0) {
-                    cout << "\33[47m";
+                    cout << "\33[30m\33[47m";
                 }
                 else {
-                    cout << "\33[40m";
+                    cout << "\33[97m\33[40m";
                 }
             }
             else {
                 if (x % 2 == 0) {
-                    cout << "\33[40m";
+                    cout << "\33[97m\33[40m";
                 }
                 else {
-                    cout << "\33[47m";
+                    cout << "\33[30m\33[47m";
                 }
             }
             
@@ -79,7 +95,7 @@ void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, str
         }
         cout << endl;
     }
-    cout << "\33[0m";
+    cout << "\33[0m\n";
 }
 
 Color selectColor() {
@@ -100,7 +116,7 @@ Color selectColor() {
 Color promptForColor() {
     Color color;
     int tempNumber;
-    cout << "Which color do you want to play? (Black 0, White 1)";
+    cout << "Which color do you want to play? (Black 0, White 1): ";
     cin >> tempNumber;
     color = (Color)tempNumber;
     return color;
@@ -112,7 +128,7 @@ Move promptForMove(int maxCoord) {
     bool moveValid = false;
     while (!moveValid) {
         string input;
-        cout << "What is your next move? fromX,fromY,toX,toY";
+        cout << "What is your next move? fromX,fromY,toX,toY: ";
         cin >> input;
 
         fromPos.x = stoi(input.substr(0, input.find(",", 0)));
@@ -126,8 +142,6 @@ Move promptForMove(int maxCoord) {
 
         toPos.y = stoi(input.substr(0, input.find(",", 0)));
         input = input.substr(input.find(",", 0) + 1, input.length());
-
-        cout << fromPos.x << fromPos.y << toPos.x << toPos.y;
 
         if (fromPos.x < 1 || fromPos.x > maxCoord || fromPos.y < 1 || fromPos.y > maxCoord) {
             system("cls");
@@ -169,23 +183,41 @@ string isMoveValid(char board[][8], Color color, Move move) {
     }
     if (board[move.to.y - 1][move.to.x - 1] != ' ') {
         // TODO: Add hit detection
-        //return false;
+       /* if (ownsPiece(board, move.to, color)) {
+            return "that's your own piece";
+        }
+        else {
+            string piece = string(1, board[move.to.y - 1][move.to.x - 1]);
+            return "beat:" + piece;
+        }*/
     }
 
     //todo: check if tolower makes sense depending whether figures are allowed to walk backwards or not
+    // TODO: Improve error messages
     switch (tolower(board[move.from.y - 1][move.from.x - 1])) {
     case 'p':
-
+        if (!isStraightDirectional(move, color)) {
+            return "not straight directional";
+        }
         break;
     case 'r':
+        if (!isStraight(move)) {
+            return "not straight";
+        }
         break;
     case 'n':
+        if (!isLShape(move)) {
+            return "not L shape";
+        }
         break;
     case 'b':
-        break;
-    case 'q':
         if (!isDiagonal(move)) {
             return "not diagonal";
+        }
+        break;
+    case 'q':
+        if (!(isDiagonal(move) || isStraight(move))) {
+            return "not diagonal or straight";
         }
         break;
     case 'k':
@@ -200,8 +232,38 @@ string isMoveValid(char board[][8], Color color, Move move) {
     return "";
 }
 
+bool isStraight(Move move) {
+    if (move.from.x == move.to.x || move.from.y == move.to.y) {
+        return true;
+    }
+    return false;
+}
+
 bool isDiagonal(Move move) {
     if (abs(move.to.x - move.from.x) == abs(move.to.y - move.from.y)){
+        return true;
+    }
+    return false;
+}
+
+bool isLShape(Move move) {
+    if (abs(move.from.x - move.to.x) == 2 && abs(move.from.y - move.to.y) == 1) {
+        return true;
+    }
+    if (abs(move.from.x - move.to.x) == 1 && abs(move.from.y - move.to.y) == 2) {
+        return true;
+    }
+    return false;
+}
+
+bool isStraightDirectional(Move move, Color color) {
+    if (move.from.x != move.to.x) {
+        return false;
+    }
+    if (color == Color::Black && move.from.y - move.to.y == -1) {
+        return true;
+    }
+    if (color == Color::White && move.from.y - move.to.y == 1) {
         return true;
     }
     return false;
