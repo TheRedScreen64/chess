@@ -23,6 +23,7 @@ int main()
     string message = "";
     string winner = "";
     bool running = true;
+
     while (running) {
         displayBoard(board, 8, 8, color, message);
         displayStats(beatenPiecesBlack, beatenPiecesWhite);
@@ -206,6 +207,7 @@ string doMove(char board[][8], Color color, int sizeX, Move move) {
     return "";
 }
 
+// TODO: Change sketchy return type to bool
 string isMoveValid(char board[][8], Color color, Move move) {
     if (board[move.from.y - 1][move.from.x - 1] == ' ') {
         return "There's no piece at that location.";
@@ -227,6 +229,9 @@ string isMoveValid(char board[][8], Color color, Move move) {
         if (!isStraight(move)) {
             return "Move is not straight";
         }
+        if (isRookPathBlocked(board, move)) {
+            return "Move is blocked";
+        }
         break;
     case 'n':
         if (!isLShape(move)) {
@@ -237,10 +242,16 @@ string isMoveValid(char board[][8], Color color, Move move) {
         if (!isDiagonal(move)) {
             return "Move is not diagonal";
         }
+        if (isBishopPathBlocked(board, move)) {
+            return "Move is blocked";
+        }
         break;
     case 'q':
         if (!(isDiagonal(move) || isStraight(move))) {
             return "Move is not diagonal or straight";
+        }
+        if (isQueenPathBlocked(board, move)) {
+            return "Move is blocked";
         }
         break;
     case 'k':
@@ -269,8 +280,18 @@ string isMoveValid(char board[][8], Color color, Move move) {
     return "";
 }
 
+bool isPieceOnSquare(char board[][8], Vector2D square) {
+    if (board[square.y - 1][square.x - 1] != ' ') {
+        return true;
+    }
+    return false;
+}
+
 bool isStraight(Move move) {
-    if (move.from.x == move.to.x || move.from.y == move.to.y) {
+    if (move.from.x == move.to.x) {
+        return true;
+    }
+    if (move.from.y == move.to.y) {
         return true;
     }
     return false;
@@ -304,4 +325,91 @@ bool isStraightDirectional(Move move, Color color) {
         return true;
     }
     return false;
+}
+
+Direction2D getDirection2D(Move move) {
+    int dirX = move.to.x > move.from.x ? 1 : -1;
+    int dirY = move.to.y > move.from.y ? 1 : -1;
+
+    return { dirX, dirY };
+}
+
+Direction getDirection(Move move) {
+    if (move.to.x > move.from.x && move.to.y == move.from.y) {
+        return Direction::Right;
+    }
+    else if (move.to.x < move.from.x && move.to.y == move.from.y) {
+        return Direction::Left;
+    }
+    else if (move.to.y > move.from.y && move.to.x == move.from.x) {
+        return Direction::Down;
+    }
+    else if (move.to.y < move.from.y && move.to.x == move.from.x) {
+        return Direction::Up;
+    }
+    else {
+        return Direction::Undefined;
+    }
+}
+
+bool isRookPathBlocked(char board[][8], Move move) {
+    switch (getDirection(move))
+    {
+    case Direction::Right:
+        for (int i = 1; i < (move.to.x - move.from.x); i++) {
+            cout << i;
+            if (isPieceOnSquare(board, { move.from.x + i, move.from.y })) {
+                return true;
+            }
+        }
+        break;
+    case Direction::Left:
+        for (int i = 1; i < (move.from.x - move.to.x); i++) {
+            cout << i;
+            if (isPieceOnSquare(board, { move.from.x - i, move.from.y })) {
+                return true;
+            }
+        }
+        break;
+    case Direction::Down:
+        for (int i = 1; i < (move.to.y - move.from.y); i++) {
+            cout << i;
+            if (isPieceOnSquare(board, { move.from.x, move.from.y + i })) {
+                return true;
+            }
+        }
+        break;
+    case Direction::Up:
+        for (int i = 1; i < (move.from.y - move.to.y); i++) {
+            cout << i;
+            if (isPieceOnSquare(board, { move.from.x, move.from.y - i })) {
+                return true;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool isBishopPathBlocked(char board[][8], Move move) {
+    Direction2D dir2d = getDirection2D(move);
+
+    for (int i = 1; i < abs(move.to.x - move.from.x); i++) {
+        if (isPieceOnSquare(board, { move.from.x + i * dir2d.x, move.from.y + i * dir2d.y })) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isQueenPathBlocked(char board[][8], Move move) {
+    if (isStraight(move)) {
+        return isRookPathBlocked(board, move);
+    }
+    else {
+        return isBishopPathBlocked(board, move);
+    }
 }
