@@ -4,6 +4,11 @@
 
 using namespace std;
 
+struct Status {
+    bool status;
+    string msg;
+};
+
 struct Vector2D {
     int x;
     int y;
@@ -40,6 +45,7 @@ Color promptForColor();
 Move promptForMove(int);
 string doMove(char board[][8], Color color, int sizeX, Move move);
 string isMoveValid(char board[][8], Color color, Move move);
+Status checkBeatPiece(char board[][8], Move move, Color color);
 
 bool isPieceOnSquare(char board[][8], Vector2D square);
 
@@ -48,6 +54,7 @@ Direction getDirection(Move move);
 
 bool isStraight(Move move);
 bool isDiagonal(Move move);
+bool isDiagonalPawn(Move move, Color color);
 bool isLShape(Move move);
 bool isStraightDirectional(Move move, Color color);
 

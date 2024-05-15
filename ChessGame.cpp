@@ -91,7 +91,7 @@ void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, str
     system("cls");
 
     string colorAsString = currentColor == Color::Black ? "Black" : "White";
-    cout << "It is " << colorAsString << "'s turn\n";
+    cout << "\nIt is " << colorAsString << "'s turn\n";
     cout << endl;
 
     if (message.length() > 0) {
@@ -215,14 +215,19 @@ string isMoveValid(char board[][8], Color color, Move move) {
     if (!ownsPiece(board, move.from, color)) {
         return "You don't own that piece.";
     }
-    
 
-    //todo: check if tolower makes sense depending whether figures are allowed to walk backwards or not
+    // TODO: Add return if from pos = to pos
+    
     // TODO: Improve error messages
     switch (tolower(board[move.from.y - 1][move.from.x - 1])) {
     case 'p':
-        if (!isStraightDirectional(move, color)) {
-            return "Move is not straight directional";
+        if (isStraightDirectional(move, color)) {
+            if (isPieceOnSquare(board, move.to)) {
+                return "Target pos is already occupied";
+            }
+        } else if (!(isDiagonalPawn(move, color) && isPieceOnSquare(board, move.to) && !ownsPiece(board, move.to, color))) {
+            // TODO: ugly if statement
+            return "Move is not permitted";
         }
         break;
     case 'r':
@@ -263,21 +268,31 @@ string isMoveValid(char board[][8], Color color, Move move) {
         return "Not a valid piece type.";
     }
 
-    if (board[move.to.y - 1][move.to.x - 1] != ' ') {
-        // TODO: Add hit detection
-        if (ownsPiece(board, move.to, color)) {
-            return "That's your own piece";
-        }
-        else {
-            char movedPiece = board[move.from.y - 1][move.from.x - 1];
-            string piece = string(1, board[move.to.y - 1][move.to.x - 1]);
-            board[move.from.y - 1][move.from.x - 1] = ' ';
-            board[move.to.y - 1][move.to.x - 1] = movedPiece;
-            return "beat:" + piece;
-        }
+    Status checkBeatStatus = checkBeatPiece(board, move, color);
+    if (checkBeatStatus.status) {
+        return checkBeatStatus.msg;
     }
 
     return "";
+}
+
+Status checkBeatPiece(char board[][8], Move move, Color color) {
+    if (board[move.to.y - 1][move.to.x - 1] != ' ') {
+        if (ownsPiece(board, move.to, color)) {
+            // TODO: Implement error type
+            return { false, "That's your own piece" };
+        }
+        else {
+            char movedPiece = board[move.from.y - 1][move.from.x - 1];
+            char piece = board[move.to.y - 1][move.to.x - 1];
+            string pieceStr = string(1, piece);
+
+            board[move.from.y - 1][move.from.x - 1] = ' ';
+            board[move.to.y - 1][move.to.x - 1] = movedPiece;
+            return { true, "beat:" + pieceStr };
+        }
+    }
+    return { false };
 }
 
 bool isPieceOnSquare(char board[][8], Vector2D square) {
@@ -304,6 +319,19 @@ bool isDiagonal(Move move) {
     return false;
 }
 
+bool isDiagonalPawn(Move move, Color color) {
+    if (abs(move.from.x - move.to.x) != 1) {
+        return false;
+    }
+    if (color == Color::Black && move.from.y - move.to.y == -1) {
+        return true;
+    }
+    if (color == Color::White && move.from.y - move.to.y == 1) {
+        return true;
+    }
+    return false;
+}
+
 bool isLShape(Move move) {
     if (abs(move.from.x - move.to.x) == 2 && abs(move.from.y - move.to.y) == 1) {
         return true;
@@ -314,9 +342,17 @@ bool isLShape(Move move) {
     return false;
 }
 
+
+// NOTE: Only used by pawn
 bool isStraightDirectional(Move move, Color color) {
     if (move.from.x != move.to.x) {
         return false;
+    }
+    if (color == Color::Black && move.from.y == 2 && (move.from.y - move.to.y == -1 || move.from.y - move.to.y == -2)) {
+        return true;
+    }
+    if (color == Color::White && move.from.y == 7 && (move.from.y - move.to.y == 1 || move.from.y - move.to.y == 2)) {
+        return true;
     }
     if (color == Color::Black && move.from.y - move.to.y == -1) {
         return true;
@@ -324,6 +360,7 @@ bool isStraightDirectional(Move move, Color color) {
     if (color == Color::White && move.from.y - move.to.y == 1) {
         return true;
     }
+    
     return false;
 }
 
