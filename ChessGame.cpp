@@ -31,8 +31,13 @@ int main()
         message = doMove(board, color, 8, move);
 
         if (message.find("beat") != string::npos) {
+            string colorAsString = color == Color::Black ? "Black" : "White";
             string piece = message.substr(5, message.find(":", 0));
-            cout << piece;
+            if (piece[0] == 'k' || piece[0] == 'K') {
+                winner = colorAsString;
+                running = false;
+                break;
+            }
             if (color == Color::Black) {
                 beatenPiecesWhite[lastInsertWhite + 1] = piece[0];
                 lastInsertWhite++;
@@ -61,7 +66,7 @@ int main()
 
     system("cls");
 
-    cout << winner << " has won!";
+    cout << winner << " has won!\n";
 }
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color) {
