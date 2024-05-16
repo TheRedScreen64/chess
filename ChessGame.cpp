@@ -26,48 +26,51 @@ int main()
         color = selectColor();
     }
 
-    string message = "";
+    string errMessage = "";
     string winner = "";
     bool patt = false;
     bool running = true;
 
     while (running) {
-        displayBoard(board, 8, 8, color, message);
+        displayBoard(board, 8, 8, color, errMessage);
         displayStats(beatenPiecesBlack, beatenPiecesWhite);
-        message = "";
-        bool exit;
-        Move move;
-        tie(exit, move) = promptForMove(8);
+        errMessage = "";
+
+        bool exit = false;
+        Move move = promptForMove(8, &exit);
         if (exit) {
             askSaveGame(board, beatenPiecesBlack, beatenPiecesWhite, color);
             return 0;
         }
-        message = doMove(board, color, 8, move);
 
-        if (message.find("beat") != string::npos) {
+        if (!isMoveValid(board, color, move, &errMessage)) {
+            continue;
+        }
+
+        if (isValidBeat(board, move, color, &errMessage)) {
             string colorAsString = color == Color::Black ? "Black" : "White";
-            string piece = message.substr(5, message.find(":", 0));
-            if (piece[0] == 'k' || piece[0] == 'K') {
+            char piece = board[move.to.y - 1][move.to.x - 1];
+            if (piece == 'k' || piece == 'K') {
                 winner = colorAsString;
-                running = false;
                 break;
             }
             if (color == Color::Black) {
-                beatenPiecesWhite[lastInsertWhite + 1] = piece[0];
+                beatenPiecesWhite[lastInsertWhite + 1] = piece;
                 lastInsertWhite++;
             }
             else {
-                beatenPiecesBlack[lastInsertBlack + 1] = piece[0];
+                beatenPiecesBlack[lastInsertBlack + 1] = piece;
                 lastInsertBlack++;
             }
             if (lastInsertBlack >= 14 && lastInsertWhite >= 14) {
                 patt = true;
-                running = false;
+                break;
             }
-            message = "";
         }
 
-        if (message != "") {
+        doMove(board, color, 8, move);
+
+        if (errMessage != "") {
             continue;
         }
 
@@ -81,18 +84,6 @@ int main()
     }
     else {
         cout << winner << " has won!\n";
-    }
-}
-
-bool ownsPiece(char board[][8], Vector2D pos, Color color) {
-    if (islower(board[pos.y - 1][pos.x - 1]) && color == Color::Black) {
-        return true;
-    }
-    else if (isupper(board[pos.y - 1][pos.x - 1]) && color == Color::White) {
-        return true;
-    }
-    else {
-        return false;
     }
 }
 
@@ -178,7 +169,7 @@ char promptForPiece() {
     return piece;
 }
 
-tuple<bool, Move> promptForMove(int maxCoord) {
+Move promptForMove(int maxCoord, bool *exit) {
     Vector2D fromPos;
     Vector2D toPos;
     bool moveValid = false;
@@ -188,7 +179,8 @@ tuple<bool, Move> promptForMove(int maxCoord) {
         cin >> input;
 
         if (input == "exit") {
-            return { true, {} };
+            *exit = true;
+            return {};
         }
 
         fromPos.x = stoi(input.substr(0, input.find(",", 0)));
@@ -219,106 +211,118 @@ tuple<bool, Move> promptForMove(int maxCoord) {
         moveValid = true;
     }
 
-    return { false, { fromPos, toPos } };
+    return { fromPos, toPos };
 }
 
-string doMove(char board[][8], Color color, int sizeX, Move move) {
-    string message = isMoveValid(board, color, move);
-    if (message == "skip") {
-        return "";
-    }
-    if (message != "") {
-        return message;
-    }
-
+void doMove(char board[][8], Color color, int sizeX, Move move) {
     char piece = board[move.from.y - 1][move.from.x - 1];
     board[move.from.y - 1][move.from.x - 1] = ' ';
     board[move.to.y - 1][move.to.x - 1] = piece;
-
-    return "";
 }
 
-// TODO: Change sketchy return type to bool
-string isMoveValid(char board[][8], Color color, Move move) {
-    if (board[move.from.y - 1][move.from.x - 1] == ' ') {
-        return "There's no piece at that location.";
+bool ownsPiece(char board[][8], Vector2D pos, Color color) {
+    if (islower(board[pos.y - 1][pos.x - 1]) && color == Color::Black) {
+        return true;
     }
-    if (!ownsPiece(board, move.from, color)) {
-        return "You don't own that piece.";
+    else if (isupper(board[pos.y - 1][pos.x - 1]) && color == Color::White) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool isMoveValid(char board[][8], Color color, Move move, string *errMessage) {
+    if (board[move.from.y - 1][move.from.x - 1] == ' ') {
+        *errMessage = "There's no piece at that location.";
+        return false;
     }
 
-    if (move.from.x == move.to.x && move.from.y == move.to.y) return "Come on, I can't see the difference there.";
+    if (!ownsPiece(board, move.from, color)) {
+        *errMessage = "You don't own that piece.";
+        return false;
+    }
+
+    if (move.from.x == move.to.x && move.from.y == move.to.y) {
+        *errMessage = "Come on, I can't see the difference there.";
+        return false;
+    }
     
-    // TODO: Improve error messages
     switch (tolower(board[move.from.y - 1][move.from.x - 1])) {
     case 'p':
-        if (isStraightDirectional(move, color)) {
+        if (isPawnMove(move, color)) {
             if (isPieceOnSquare(board, move.to)) {
-                return "Target pos is already occupied";
+                *errMessage = "Target pos is already occupied";
+                return false;
             }
         } else if (!(isDiagonalPawn(move, color) && isPieceOnSquare(board, move.to) && !ownsPiece(board, move.to, color))) {
             // TODO: ugly if statement
-            return "Move is not permitted";
+            *errMessage = "Move is not permitted";
+            return false;
         }
         if (color == Color::Black && move.to.y == 8) {
-            // convert
             convertPawn(board, move.to, color);
             board[move.from.y - 1][move.from.x - 1] = ' ';
-            return "skip";
+            return false;
         }
         else if (color == Color::White && move.to.y == 1) {
             convertPawn(board, move.to, color);
             board[move.from.y - 1][move.from.x - 1] = ' ';
-            return "skip";
+            return false;
         }
         break;
     case 'r':
         if (!isStraight(move)) {
-            return "Move is not straight";
+            *errMessage = "Move is not straight";
+            return false;
         }
         if (isRookPathBlocked(board, move)) {
-            return "Move is blocked";
+            *errMessage = "Move is blocked";
+            return false;
         }
         break;
     case 'n':
         if (!isLShape(move)) {
-            return "Move is not L shape";
+            *errMessage = "Move is not L shape";
+            return false;
         }
         break;
     case 'b':
         if (!isDiagonal(move)) {
-            return "Move is not diagonal";
+            *errMessage = "Move is not diagonal";
+            return false;
         }
         if (isBishopPathBlocked(board, move)) {
-            return "Move is blocked";
+            *errMessage = "Move is blocked";
+            return false;
         }
         break;
     case 'q':
         if (!(isDiagonal(move) || isStraight(move))) {
-            return "Move is not diagonal or straight";
+            *errMessage = "Move is not diagonal or straight";
+            return false;
         }
         if (isQueenPathBlocked(board, move)) {
-            return "Move is blocked";
+            *errMessage = "Move is blocked";
+            return false;
         }
         break;
     case 'k':
         if (abs(move.to.x - move.from.x) > 1 || abs(move.to.y - move.from.y) > 1) {
-            return "Move is to far";
+            *errMessage = "Move is to far";
+            return false;
         }
         if (isKingNearby(board, move, color)) {
-            return "Opponents king is nearby";
+            *errMessage = "Opponents king is nearby";
+            return false;
         }
         break;
     default:
-        return "Not a valid piece type.";
+        *errMessage = "Not a valid piece type.";
+        return false;
     }
 
-    Status checkBeatStatus = checkBeatPiece(board, move, color);
-    if (checkBeatStatus.status) {
-        return checkBeatStatus.msg;
-    }
-
-    return "";
+    return true;
 }
 
 bool isKingNearby(char board[][8], Move move, Color color) {
@@ -346,11 +350,11 @@ bool isKingNearby(char board[][8], Move move, Color color) {
     return false;
 }
 
-Status checkBeatPiece(char board[][8], Move move, Color color) {
+bool isValidBeat(char board[][8], Move move, Color color, string *errMessage) {
     if (board[move.to.y - 1][move.to.x - 1] != ' ') {
         if (ownsPiece(board, move.to, color)) {
-            // TODO: Implement error type
-            return { true, "That's your own piece" };
+            *errMessage = "You can't beat your own piece";
+            return false;
         }
         else {
             char movedPiece = board[move.from.y - 1][move.from.x - 1];
@@ -359,10 +363,10 @@ Status checkBeatPiece(char board[][8], Move move, Color color) {
 
             board[move.from.y - 1][move.from.x - 1] = ' ';
             board[move.to.y - 1][move.to.x - 1] = movedPiece;
-            return { true, "beat:" + pieceStr };
+            return true;
         }
     }
-    return { false };
+    return false;
 }
 
 void convertPawn(char board[][8], Vector2D pos, Color color) {
@@ -433,9 +437,7 @@ bool isLShape(Move move) {
     return false;
 }
 
-
-// NOTE: Only used by pawn
-bool isStraightDirectional(Move move, Color color) {
+bool isPawnMove(Move move, Color color) {
     if (move.from.x != move.to.x) {
         return false;
     }
