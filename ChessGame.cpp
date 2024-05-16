@@ -2,7 +2,7 @@
 
 int main()
 {
-    static char board[8][8] = {
+    /*static char board[8][8] = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -11,6 +11,17 @@ int main()
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
+    };*/
+
+    static char board[8][8] = {
+        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+        {' ', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'p', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+        {' ', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
     };
 
     static char beatenPiecesBlack[16];
@@ -155,6 +166,15 @@ Color promptForColor() {
     return color;
 }
 
+char promptForPiece() {
+    char piece;
+    string input;
+    cout << "Which piece do you want your pawn to become? (q,r,b,n)";
+    cin >> input;
+    piece = input[0];
+    return piece;
+}
+
 Move promptForMove(int maxCoord) {
     Vector2D fromPos;
     Vector2D toPos;
@@ -196,6 +216,9 @@ Move promptForMove(int maxCoord) {
 
 string doMove(char board[][8], Color color, int sizeX, Move move) {
     string message = isMoveValid(board, color, move);
+    if (message == "skip") {
+        return "";
+    }
     if (message != "") {
         return message;
     }
@@ -228,6 +251,17 @@ string isMoveValid(char board[][8], Color color, Move move) {
         } else if (!(isDiagonalPawn(move, color) && isPieceOnSquare(board, move.to) && !ownsPiece(board, move.to, color))) {
             // TODO: ugly if statement
             return "Move is not permitted";
+        }
+        if (color == Color::Black && move.to.y == 8) {
+            // convert
+            convertPawn(board, move.to);
+            board[move.from.y - 1][move.from.x - 1] = ' ';
+            return "skip";
+        }
+        else if (color == Color::White && move.to.y == 1) {
+            convertPawn(board, move.to);
+            board[move.from.y - 1][move.from.x - 1] = ' ';
+            return "skip";
         }
         break;
     case 'r':
@@ -293,6 +327,25 @@ Status checkBeatPiece(char board[][8], Move move, Color color) {
         }
     }
     return { false };
+}
+
+void convertPawn(char board[][8], Vector2D pos) {
+    if (pos.y != 1 && pos.y != 8) return;
+
+    system("cls");
+    char piece;
+    bool pieceSelected = false;
+    while (!pieceSelected) {
+        piece = promptForPiece();
+        if (piece != 'q' && piece != 'r' && piece != 'b' && piece != 'n') {
+            system("cls");
+            continue;
+        }
+        pieceSelected = true;
+    }
+    system("cls");
+
+    board[pos.y - 1][pos.x - 1] = piece;
 }
 
 bool isPieceOnSquare(char board[][8], Vector2D square) {
