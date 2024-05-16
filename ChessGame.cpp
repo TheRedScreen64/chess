@@ -2,28 +2,6 @@
 
 int main()
 {
-    //static char board[8][8] = {
-    //    {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-    //    {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-    //    {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
-    //};
-
-    //static char board[8][8] = {
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', 'K', ' ', 'r', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    //};
-
     static char board[8][8] = {
             {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
             {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
@@ -47,8 +25,6 @@ int main()
     if (color == Color::Undefined) {
         color = selectColor();
     }
-
-    //saveGame(board, beatenPiecesBlack, beatenPiecesWhite, color);
 
     string message = "";
     string winner = "";
@@ -271,7 +247,7 @@ string isMoveValid(char board[][8], Color color, Move move) {
         return "You don't own that piece.";
     }
 
-    // TODO: Add return if from pos = to pos
+    if (move.from.x == move.to.x && move.from.y == move.to.y) return "Come on, I can't see the difference there.";
     
     // TODO: Improve error messages
     switch (tolower(board[move.from.y - 1][move.from.x - 1])) {
