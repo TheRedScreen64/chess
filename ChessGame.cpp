@@ -2,34 +2,53 @@
 
 int main()
 {
-    static char board[8][8] = {
-        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-        {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
-    };
+    //static char board[8][8] = {
+    //    {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+    //    {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+    //    {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
+    //};
 
-  /*  static char board[8][8] = {
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', 'K', ' ', 'r', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-    };*/
+    //static char board[8][8] = {
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', 'K', ' ', 'r', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    //};
+
+    static char board[8][8] = {
+            {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
+            {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+            {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+            {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
+    };;
 
     static char beatenPiecesBlack[16];
     int lastInsertBlack = -1;
     static char beatenPiecesWhite[16];
     int lastInsertWhite = -1;
 
-    Color color = selectColor();
+    Color color = Color::Undefined;
+
+    askLoadGame(board, beatenPiecesBlack, beatenPiecesWhite, &color);
+    
+    if (color == Color::Undefined) {
+        color = selectColor();
+    }
+
+    //saveGame(board, beatenPiecesBlack, beatenPiecesWhite, color);
 
     string message = "";
     string winner = "";
@@ -40,7 +59,13 @@ int main()
         displayBoard(board, 8, 8, color, message);
         displayStats(beatenPiecesBlack, beatenPiecesWhite);
         message = "";
-        Move move = promptForMove(8);
+        bool exit;
+        Move move;
+        tie(exit, move) = promptForMove(8);
+        if (exit) {
+            askSaveGame(board, beatenPiecesBlack, beatenPiecesWhite, color);
+            return 0;
+        }
         message = doMove(board, color, 8, move);
 
         if (message.find("beat") != string::npos) {
@@ -59,13 +84,7 @@ int main()
                 beatenPiecesBlack[lastInsertBlack + 1] = piece[0];
                 lastInsertBlack++;
             }
-            if (lastInsertBlack >= 14) {
-                winner = "White";
-                patt = true;
-                running = false;
-            }
-            else if (lastInsertWhite >= 14) {
-                winner = "Black";
+            if (lastInsertBlack >= 14 && lastInsertWhite >= 14) {
                 patt = true;
                 running = false;
             }
@@ -81,7 +100,12 @@ int main()
 
     system("cls");
 
-    cout << winner << " has won!\n";
+    if (patt) {
+        cout << "Patt!\n";
+    }
+    else {
+        cout << winner << " has won!\n";
+    }
 }
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color) {
@@ -163,7 +187,7 @@ Color selectColor() {
 Color promptForColor() {
     Color color;
     int tempNumber;
-    cout << "Which color do you want to play? (Black 0, White 1): ";
+    cout << "Which color do you want to play? (Black 1, White 2): ";
     cin >> tempNumber;
     color = (Color)tempNumber;
     return color;
@@ -178,14 +202,18 @@ char promptForPiece() {
     return piece;
 }
 
-Move promptForMove(int maxCoord) {
+tuple<bool, Move> promptForMove(int maxCoord) {
     Vector2D fromPos;
     Vector2D toPos;
     bool moveValid = false;
     while (!moveValid) {
         string input;
-        cout << "What is your next move? fromX,fromY,toX,toY: ";
+        cout << "What is your next move? fromX,fromY,toX,toY or exit: ";
         cin >> input;
+
+        if (input == "exit") {
+            return { true, {} };
+        }
 
         fromPos.x = stoi(input.substr(0, input.find(",", 0)));
         input = input.substr(input.find(",", 0) + 1, input.length());
@@ -214,7 +242,8 @@ Move promptForMove(int maxCoord) {
 
         moveValid = true;
     }
-    return { fromPos, toPos };
+
+    return { false, { fromPos, toPos } };
 }
 
 string doMove(char board[][8], Color color, int sizeX, Move move) {
@@ -345,7 +374,7 @@ Status checkBeatPiece(char board[][8], Move move, Color color) {
     if (board[move.to.y - 1][move.to.x - 1] != ' ') {
         if (ownsPiece(board, move.to, color)) {
             // TODO: Implement error type
-            return { false, "That's your own piece" };
+            return { true, "That's your own piece" };
         }
         else {
             char movedPiece = board[move.from.y - 1][move.from.x - 1];

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <tuple>
 
 using namespace std;
 
@@ -33,8 +34,9 @@ struct Direction2D {
 };
 
 enum class Color {
-    Black = 0,
-    White = 1
+    Undefined = 0,
+    Black = 1,
+    White = 2
 };
 
 void displayStats(char beatenPiecesBlack[16], char beatenPiecesWhite[16]);
@@ -43,7 +45,7 @@ bool ownsPiece(char board[][8], Vector2D pos, Color color);
 Color selectColor();
 Color promptForColor();
 char promptForPiece();
-Move promptForMove(int);
+tuple<bool, Move> promptForMove(int);
 string doMove(char board[][8], Color color, int sizeX, Move move);
 string isMoveValid(char board[][8], Color color, Move move);
 Status checkBeatPiece(char board[][8], Move move, Color color);
@@ -64,3 +66,9 @@ bool isStraightDirectional(Move move, Color color);
 bool isBishopPathBlocked(char board[][8], Move move);
 bool isRookPathBlocked(char board[][8], Move move);
 bool isQueenPathBlocked(char board[][8], Move move);
+
+bool saveFileExists();
+void askSaveGame(char board[][8], char beatenPiecesBlack[16], char beatenPiecesWhite[16], Color color);
+void askLoadGame(char board[][8], char beatenPiecesBlack[16], char beatenPiecesWhite[16], Color* color);
+void saveGame(char board[][8], char beatenPiecesBlack[16], char beatenPiecesWhite[16], Color color);
+void loadGame(char board[][8], char beatenPiecesBlack[16], char beatenPiecesWhite[16], Color *color);

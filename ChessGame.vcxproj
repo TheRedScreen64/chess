@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ChessGame.cpp" />
+    <ClCompile Include="SaveGame.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChessGame.h" />
