@@ -48,8 +48,9 @@ string doMove(char board[][8], Color color, int sizeX, Move move);
 string isMoveValid(char board[][8], Color color, Move move);
 Status checkBeatPiece(char board[][8], Move move, Color color);
 
+bool isKingNearby(char board[][8], Move move, Color color);
 bool isPieceOnSquare(char board[][8], Vector2D square);
-void convertPawn(char board[][8], Vector2D pos);
+void convertPawn(char board[][8], Vector2D pos, Color color);
 
 Direction2D getDirection2D(Move move);
 Direction getDirection(Move move);

@@ -2,7 +2,7 @@
 
 int main()
 {
-    /*static char board[8][8] = {
+    static char board[8][8] = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
         {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -11,18 +11,18 @@ int main()
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
-    };*/
-
-    static char board[8][8] = {
-        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},
-        {' ', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'p', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-        {' ', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
     };
+
+  /*  static char board[8][8] = {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'k', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'K', ' ', 'r', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    };*/
 
     static char beatenPiecesBlack[16];
     int lastInsertBlack = -1;
@@ -33,6 +33,7 @@ int main()
 
     string message = "";
     string winner = "";
+    bool patt = false;
     bool running = true;
 
     while (running) {
@@ -58,12 +59,14 @@ int main()
                 beatenPiecesBlack[lastInsertBlack + 1] = piece[0];
                 lastInsertBlack++;
             }
-            if (lastInsertBlack >= 15) {
+            if (lastInsertBlack >= 14) {
                 winner = "White";
+                patt = true;
                 running = false;
             }
-            else if (lastInsertWhite >= 15) {
+            else if (lastInsertWhite >= 14) {
                 winner = "Black";
+                patt = true;
                 running = false;
             }
             message = "";
@@ -254,12 +257,12 @@ string isMoveValid(char board[][8], Color color, Move move) {
         }
         if (color == Color::Black && move.to.y == 8) {
             // convert
-            convertPawn(board, move.to);
+            convertPawn(board, move.to, color);
             board[move.from.y - 1][move.from.x - 1] = ' ';
             return "skip";
         }
         else if (color == Color::White && move.to.y == 1) {
-            convertPawn(board, move.to);
+            convertPawn(board, move.to, color);
             board[move.from.y - 1][move.from.x - 1] = ' ';
             return "skip";
         }
@@ -297,6 +300,9 @@ string isMoveValid(char board[][8], Color color, Move move) {
         if (abs(move.to.x - move.from.x) > 1 || abs(move.to.y - move.from.y) > 1) {
             return "Move is to far";
         }
+        if (isKingNearby(board, move, color)) {
+            return "Opponents king is nearby";
+        }
         break;
     default:
         return "Not a valid piece type.";
@@ -308,6 +314,31 @@ string isMoveValid(char board[][8], Color color, Move move) {
     }
 
     return "";
+}
+
+bool isKingNearby(char board[][8], Move move, Color color) {
+    Vector2D nearbySquares[8] = {
+        { move.to.x - 1, move.to.y },
+        { move.to.x + 1, move.to.y },
+        { move.to.x, move.to.y - 1 },
+        { move.to.x, move.to.y + 1 },
+        { move.to.x - 1, move.to.y - 1 },
+        { move.to.x - 1, move.to.y + 1 },
+        { move.to.x + 1, move.to.y - 1 },
+        { move.to.x + 1, move.to.y + 1 }
+    };
+
+    char kingPiece = color == Color::Black ? 'K' : 'k';
+
+    for (int i = 0; i < 8; i++) {
+        if (nearbySquares[i].x > -1 && nearbySquares[i].x < 8 && nearbySquares[i].y > -1 && nearbySquares[i].y < 8) {
+            cout << board[nearbySquares[i].y - 1][nearbySquares[i].x - 1];
+            if (board[nearbySquares[i].y - 1][nearbySquares[i].x - 1] == kingPiece) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 Status checkBeatPiece(char board[][8], Move move, Color color) {
@@ -329,7 +360,7 @@ Status checkBeatPiece(char board[][8], Move move, Color color) {
     return { false };
 }
 
-void convertPawn(char board[][8], Vector2D pos) {
+void convertPawn(char board[][8], Vector2D pos, Color color) {
     if (pos.y != 1 && pos.y != 8) return;
 
     system("cls");
@@ -344,6 +375,8 @@ void convertPawn(char board[][8], Vector2D pos) {
         pieceSelected = true;
     }
     system("cls");
+
+    piece = color == Color::Black ? piece : toupper(piece);
 
     board[pos.y - 1][pos.x - 1] = piece;
 }
