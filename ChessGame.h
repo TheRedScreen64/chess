@@ -48,10 +48,12 @@ char promptForPiece();
 Move promptForMove(int, bool*);
 
 void doMove(char board[][8], Color color, int sizeX, Move move);
+void doBeat(char board[][8], Move move);
 void convertPawn(char board[][8], Vector2D pos, Color color);
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color);
 bool isMoveValid(char board[][8], Color color, Move move, string*);
+bool isBeat(char board[][8], Move move);
 bool isValidBeat(char board[][8], Move move, Color color, string*);
 bool isKingNearby(char board[][8], Move move, Color color);
 bool isPieceOnSquare(char board[][8], Vector2D square);

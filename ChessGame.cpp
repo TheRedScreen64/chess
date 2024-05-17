@@ -47,34 +47,40 @@ int main()
             continue;
         }
 
-        if (isValidBeat(board, move, color, &errMessage)) {
-            string colorAsString = color == Color::Black ? "Black" : "White";
-            char piece = board[move.to.y - 1][move.to.x - 1];
-            if (piece == 'k' || piece == 'K') {
-                winner = colorAsString;
-                break;
-            }
-            if (color == Color::Black) {
-                beatenPiecesWhite[lastInsertWhite + 1] = piece;
-                lastInsertWhite++;
-            }
-            else {
-                beatenPiecesBlack[lastInsertBlack + 1] = piece;
-                lastInsertBlack++;
-            }
-            if (lastInsertBlack >= 14 && lastInsertWhite >= 14) {
-                patt = true;
-                break;
+        if (isBeat(board, move)) {
+            if (isValidBeat(board, move, color, &errMessage)) {
+                string colorAsString = color == Color::Black ? "Black" : "White";
+                char piece = board[move.to.y - 1][move.to.x - 1];
+
+                doBeat(board, move);
+
+                if (piece == 'k' || piece == 'K') {
+                    winner = colorAsString;
+                    break;
+                }
+
+                if (color == Color::Black) {
+                    beatenPiecesWhite[lastInsertWhite + 1] = piece;
+                    lastInsertWhite++;
+                }
+                else {
+                    beatenPiecesBlack[lastInsertBlack + 1] = piece;
+                    lastInsertBlack++;
+                }
+
+                if (lastInsertBlack >= 14 && lastInsertWhite >= 14) {
+                    patt = true;
+                    break;
+                }
             }
         }
-
-        doMove(board, color, 8, move);
-
-        if (errMessage != "") {
-            continue;
+        else {
+            doMove(board, color, 8, move);
         }
 
-        color = color == Color::Black ? Color::White : Color::Black;
+        if (errMessage == "") {
+            color = color == Color::Black ? Color::White : Color::Black;
+        }
     }
 
     system("cls");
@@ -220,6 +226,13 @@ void doMove(char board[][8], Color color, int sizeX, Move move) {
     board[move.to.y - 1][move.to.x - 1] = piece;
 }
 
+void doBeat(char board[][8], Move move) {
+    char movedPiece = board[move.from.y - 1][move.from.x - 1];
+
+    board[move.from.y - 1][move.from.x - 1] = ' ';
+    board[move.to.y - 1][move.to.x - 1] = movedPiece;
+}
+
 bool ownsPiece(char board[][8], Vector2D pos, Color color) {
     if (islower(board[pos.y - 1][pos.x - 1]) && color == Color::Black) {
         return true;
@@ -350,23 +363,21 @@ bool isKingNearby(char board[][8], Move move, Color color) {
     return false;
 }
 
-bool isValidBeat(char board[][8], Move move, Color color, string *errMessage) {
+bool isBeat(char board[][8], Move move) {
     if (board[move.to.y - 1][move.to.x - 1] != ' ') {
-        if (ownsPiece(board, move.to, color)) {
-            *errMessage = "You can't beat your own piece";
-            return false;
-        }
-        else {
-            char movedPiece = board[move.from.y - 1][move.from.x - 1];
-            char piece = board[move.to.y - 1][move.to.x - 1];
-            string pieceStr = string(1, piece);
-
-            board[move.from.y - 1][move.from.x - 1] = ' ';
-            board[move.to.y - 1][move.to.x - 1] = movedPiece;
-            return true;
-        }
+        return true;
     }
     return false;
+}
+
+bool isValidBeat(char board[][8], Move move, Color color, string *errMessage) {
+    if (ownsPiece(board, move.to, color)) {
+        *errMessage = "You can't beat your own piece";
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
 void convertPawn(char board[][8], Vector2D pos, Color color) {
