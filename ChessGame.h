@@ -47,8 +47,7 @@ Color promptForColor();
 char promptForPiece();
 Move promptForMove(int, bool*);
 
-void doMove(char board[][8], Color color, int sizeX, Move move);
-void doBeat(char board[][8], Move move);
+void doMove(char board[][8], Move move);
 void convertPawn(char board[][8], Vector2D pos, Color color);
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color);

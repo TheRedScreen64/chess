@@ -47,38 +47,32 @@ int main()
             continue;
         }
 
-        if (isBeat(board, move)) {
-            if (isValidBeat(board, move, color, &errMessage)) {
-                string colorAsString = color == Color::Black ? "Black" : "White";
-                char piece = board[move.to.y - 1][move.to.x - 1];
+        if (isBeat(board, move) && isValidBeat(board, move, color, &errMessage)) {
+            string colorAsString = color == Color::Black ? "Black" : "White";
+            char piece = board[move.to.y - 1][move.to.x - 1];
 
-                doBeat(board, move);
-
-                if (piece == 'k' || piece == 'K') {
-                    winner = colorAsString;
-                    break;
-                }
-
-                if (color == Color::Black) {
-                    beatenPiecesWhite[lastInsertWhite + 1] = piece;
-                    lastInsertWhite++;
-                }
-                else {
-                    beatenPiecesBlack[lastInsertBlack + 1] = piece;
-                    lastInsertBlack++;
-                }
-
-                if (lastInsertBlack >= 14 && lastInsertWhite >= 14) {
-                    patt = true;
-                    break;
-                }
+            if (piece == 'k' || piece == 'K') {
+                winner = colorAsString;
+                break;
             }
-        }
-        else {
-            doMove(board, color, 8, move);
+
+            if (color == Color::Black) {
+                beatenPiecesWhite[lastInsertWhite + 1] = piece;
+                lastInsertWhite++;
+            }
+            else {
+                beatenPiecesBlack[lastInsertBlack + 1] = piece;
+                lastInsertBlack++;
+            }
+
+            if (lastInsertBlack >= 14 && lastInsertWhite >= 14) {
+                patt = true;
+                break;
+            }
         }
 
         if (errMessage == "") {
+            doMove(board, move);
             color = color == Color::Black ? Color::White : Color::Black;
         }
     }
@@ -141,6 +135,7 @@ void displayBoard(char board[][8], int sizeX, int sizeY, Color currentColor, str
     }
     cout << "\33[0m\n";
 }
+
 
 Color selectColor() {
     Color color;
@@ -220,18 +215,34 @@ Move promptForMove(int maxCoord, bool *exit) {
     return { fromPos, toPos };
 }
 
-void doMove(char board[][8], Color color, int sizeX, Move move) {
+
+void doMove(char board[][8], Move move) {
     char piece = board[move.from.y - 1][move.from.x - 1];
     board[move.from.y - 1][move.from.x - 1] = ' ';
     board[move.to.y - 1][move.to.x - 1] = piece;
 }
 
-void doBeat(char board[][8], Move move) {
-    char movedPiece = board[move.from.y - 1][move.from.x - 1];
+void convertPawn(char board[][8], Vector2D pos, Color color) {
+    if (pos.y != 1 && pos.y != 8) return;
 
-    board[move.from.y - 1][move.from.x - 1] = ' ';
-    board[move.to.y - 1][move.to.x - 1] = movedPiece;
+    system("cls");
+    char piece;
+    bool pieceSelected = false;
+    while (!pieceSelected) {
+        piece = promptForPiece();
+        if (piece != 'q' && piece != 'r' && piece != 'b' && piece != 'n') {
+            system("cls");
+            continue;
+        }
+        pieceSelected = true;
+    }
+    system("cls");
+
+    piece = color == Color::Black ? piece : toupper(piece);
+
+    board[pos.y - 1][pos.x - 1] = piece;
 }
+
 
 bool ownsPiece(char board[][8], Vector2D pos, Color color) {
     if (islower(board[pos.y - 1][pos.x - 1]) && color == Color::Black) {
@@ -380,27 +391,6 @@ bool isValidBeat(char board[][8], Move move, Color color, string *errMessage) {
     }
 }
 
-void convertPawn(char board[][8], Vector2D pos, Color color) {
-    if (pos.y != 1 && pos.y != 8) return;
-
-    system("cls");
-    char piece;
-    bool pieceSelected = false;
-    while (!pieceSelected) {
-        piece = promptForPiece();
-        if (piece != 'q' && piece != 'r' && piece != 'b' && piece != 'n') {
-            system("cls");
-            continue;
-        }
-        pieceSelected = true;
-    }
-    system("cls");
-
-    piece = color == Color::Black ? piece : toupper(piece);
-
-    board[pos.y - 1][pos.x - 1] = piece;
-}
-
 bool isPieceOnSquare(char board[][8], Vector2D square) {
     if (board[square.y - 1][square.x - 1] != ' ') {
         return true;
@@ -467,6 +457,7 @@ bool isPawnMove(Move move, Color color) {
     
     return false;
 }
+
 
 Direction2D getDirection2D(Move move) {
     int dirX = move.to.x > move.from.x ? 1 : -1;
